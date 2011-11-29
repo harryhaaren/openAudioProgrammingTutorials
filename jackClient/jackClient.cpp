@@ -1,9 +1,11 @@
-// compile with:    g++ main.cpp `pkg-config --cflags --libs jack`
+
+// Contact: Harry van Haaren <harryhaaren@gmail.com>
+// Compile: g++ jackClient.cpp `pkg-config --cflags --libs jack`
 
 #include <iostream>
 #include <jack/jack.h>
 
-// declare two "jack_port_t" pointers, which will represent a port
+// declare two "jack_port_t" pointers, which will each represent a port
 // in the JACK graph (ie: Connections tab in QJackCtl)
 jack_port_t* inputPort = 0;
 jack_port_t* outputPort = 0;
