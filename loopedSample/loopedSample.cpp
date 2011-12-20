@@ -1,6 +1,6 @@
 
 // Contact: Harry van Haaren <harryhaaren@gmail.com>
-// Compile: g++ jackClient.cpp `pkg-config --cflags --libs jack`
+// Compile: g++ loopedSample.cpp `pkg-config --cflags --libs jack sndfile`
 
 // If this tutorial seems a little advanced, please look back over the
 // Simple JACK client tutorial. https://github.com/harryhaaren/Linux-Audio-Programming-Documentation/
