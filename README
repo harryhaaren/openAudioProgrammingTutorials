@@ -1,10 +1,6 @@
-        Linux Audio Programming Documentation
+        Open Audio Programming Tutorials
 
-This repo exists as a place to leave example code that belongs
-to some tutorials in the FlossManual. We are using git as a way to keep
-track of versions of tutorials, and allow easy updating of content for
-two reasons:
-
-1. It makes adding code, and editing code much easier for authors
-2. It is how a lot of projects collaberate, and as such is an important
-   step in learning Linux Audio Programming!
+This repo exists as a place to host example code, where they can be used
+as tutorials for learning C++ audio programming. It would be great to
+get feedback and patches from the community to ensure the examples stay
+up to date!
