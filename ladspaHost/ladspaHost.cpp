@@ -39,6 +39,11 @@ LADSPA_Handle instanceHandle;
 Glib::Module* glibModule = 0;
 LADSPA_Descriptor* descriptor = 0;
 
+// here we define the processing parameters we're going to use later
+// note that they're volatile, its to do with threading, don't worry about it for now!
+volatile float pitchShiftAmount = 2.0; // octave up
+volatile float bufferSize       = 3.0; // value in range [1,7] so 3 is pretty standard
+volatile float outputLatency    = 0.f; // this value will only be written to, not read
 
 jack_port_t* inputPort = 0;
 jack_port_t* outputPort = 0;
@@ -49,10 +54,13 @@ int process(jack_nframes_t nframes, void* )
   float* inputBuffer = (float*)jack_port_get_buffer ( inputPort , nframes);
   float* outputBuffer= (float*)jack_port_get_buffer ( outputPort, nframes);
   
-  for ( int i = 0; i < (int) nframes; i++)
-  {
-    outputBuffer[i] = inputBuffer[i];
-  }
+  // connect the JACK audio buffers to the LADSPA instance
+  descriptor->connect_port( instanceHandle , 2, inputBuffer );  // input
+  descriptor->connect_port( instanceHandle , 3, outputBuffer ); // output
+  
+  // here we call run(): its going to perform the needed processing, reading
+  // the input *directly* from JACK, and writing the output *directly* to jack
+  descriptor->run( instanceHandle , nframes);
   
   return 0;
 }
@@ -109,6 +117,29 @@ int main()
   instanceHandle = descriptor->instantiate( descriptor ,samplerate );
   
   
+  // so far handling each LADSPA effect was the same:
+  //  -load the library
+  //  -extract the descriptor_function
+  //  -get & cast the descriptor itself
+  //  -create an instance, using the descriptor
+  //
+  // From now on, things get specific to each LADSPA effect, based on what
+  // ports it has, and how many. To get information about a plugin, use the
+  // "analyseplugin" tool:
+  //  $ analyseplugin "/usr/lib/ladspa/am_pitchshift_1433.so"
+  // 
+  // We are shown a printout of the effects ports & details, we are now
+  // going to write the code to interact with those ports
+  
+  // this function connects a ports of the LADSPA instance to a certain
+  // memory address of your program. It allows you to provide input & output
+  // of control & audio data to / from the plugin!
+  descriptor->connect_port( instanceHandle , 0, (float*)&pitchShiftAmount );
+  descriptor->connect_port( instanceHandle , 1, (float*)&bufferSize );
+  // ports 2 and 3 are audio input & output, we'll connect them in the
+  // process() function that JACK calls
+  descriptor->connect_port( instanceHandle , 4, (float*)&outputLatency );
+  
   // LADSPA stuff finishes here!
   
   // set up JACK & start processing
@@ -128,7 +159,7 @@ int main()
   
   jack_activate(client);
   
-  sleep(30);
+  sleep(90);
   
   jack_deactivate(client);
   
