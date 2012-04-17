@@ -30,10 +30,11 @@
 #include <glibmm/module.h>
 
 // here we have the "handle" to the LADSPA effect, this is how we will
-// create an actual effect object later on
-LADSPA_Handle ladspaHandle;
+// use the effect object later
+LADSPA_Handle instanceHandle;
 
 // next we define some global variables, like glibLadspaModule and LADSPA_Handle
+// we use them to load the LADSPA .so library file, and instantiate the plugin
 // note these are pointers, so we initialize them to 0
 Glib::Module* glibModule = 0;
 LADSPA_Descriptor* descriptor = 0;
@@ -71,8 +72,41 @@ int main()
   
   
   // LADSPA stuff starts here!
-  ladspaModule = new Glib::Module( pluginString );
+  // ensure you have the file there! Try the following command:
+  // $   ls /usr/lib/ladspa/ | grep "am_pitchshift"
+  glibModule = new Glib::Module( "/usr/lib/ladspa/am_pitchshift_1433.so" );
   
+  // check that the module is valid
+  if ( !glibModule )
+  {
+    std::cout << "Error loading module, Quitting NOW!" << std::endl;
+    return -1;
+  }
+
+  std::cout << "Module loading OK, now getting descriptor function" << std::endl;
+  
+  LADSPA_Descriptor_Function descriptorFunction;
+  void* tmpFunc;
+  bool found = glibModule->get_symbol("ladspa_descriptor", tmpFunc );
+  
+  if ( !found )
+  {
+    std::cout << "ERROR: Could not find LADSPA_Descriptor_Function, probably due to non LADSPA .so file. Quitting now!" << std::endl;
+    return -1;
+  }
+  
+  // we have a valid LADSPA object loaded
+  std::cout << "Casting Descriptor_Function now!" << std::endl;
+  descriptorFunction = (LADSPA_Descriptor_Function) tmpFunc;
+  
+  // finally get the descriptor from the descriptorFunction
+  // the "0" here means we want to load the first plugin from the .so file
+  // The AM PitchShifter has only one LADSPA effect in it, but calf.so has many!
+  descriptor = const_cast<LADSPA_Descriptor*>( descriptorFunction( 0 ) );
+  
+  // here we create the actual plugin instance, using the descriptor and
+  // storing the actual instance in the "instanceHandle" variable
+  instanceHandle = descriptor->instantiate( descriptor ,samplerate );
   
   
   // LADSPA stuff finishes here!
