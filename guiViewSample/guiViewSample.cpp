@@ -1,6 +1,6 @@
 
 // Contact: Harry van Haaren <harryhaaren@gmail.com>
-// Compile: g++ -oguiViewSample guiViewSample.cpp `pkg-config --cflags --libs sndfile gtkmm-2.4`
+// Compile: g++ -oguiViewSample waveview.cpp guiViewSample.cpp `pkg-config --cflags --libs sndfile gtkmm-2.4`
 
 // In this tutorial you will learn how to create a simple Gtkmm window,
 // and then show a custom widget inside it to draw a waveform of a sample
@@ -12,6 +12,9 @@
 
 // to get access to the GUI functions
 #include <gtkmm.h>
+
+// include our custom widget!
+#include "waveview.hpp"
 
 // get a vector, that's an Array that we can dynamically resize. It contains
 // floats in this case, so we can store audio samples in it.
@@ -72,8 +75,18 @@ exists in the directory the program is running!" << std::endl;
   // set some attributes
   window.set_default_size(300,150);
   window.set_position(Gtk::WIN_POS_CENTER);
+  
+  // create an instance of our custom widget
+  GWaveView waveview;
+  
+  // add the widget to the window
+  window.add(waveview);
+  
+  // tell the window to show its contents
   window.show_all();
   
+  // tell our widget to draw the sampleVector
+  waveview.draw(sampleVector);
   
   // now call on the Gtk::Main to run, and it does the work for us.
   kit.run(window);
