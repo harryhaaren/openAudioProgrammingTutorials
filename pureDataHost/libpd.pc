@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libPD
+Description: LibPureData is a DSP library allowing the use of Pure Data patches in programs
+Version: 0.1
+Libs: -L${libdir} -lpd
+Cflags: -I${includedir}

@@ -1,0 +1,57 @@
+
+    Pure Data Host class
+
+
+This is a relatively advanced tutorial, if you're not comfortable with
+classes and audio processing perhaps start with the jackClient tutorial.
+
+To use the libpd library we need to install it, which is going to take
+some effort as its not yet packaged by most distrobutions. So we need to
+get it's source, copy the files to the right places manually, and then
+link our executable against it. That is not easy, and can be frustrating
+if its not working...
+
+Getting libPD:
+https://github.com/libpd/libpd
+or
+$ cd /path/to/programming/folder
+$ git clone https://github.com/libpd/libpd.git
+
+___________________OPTIONAL____________________
+
+If you don't want the JAVA bindings because you're using C or C++ then
+just change this line 67 in the makefile:
+
+all: $(LIBPD) javalib 
+
+all: $(LIBPD)
+
+_______________________________________________
+
+Now we build the library:
+$ make
+
+Finally we need to install the right files in the right places. There's
+three steps here:
+-Copy the .pc file, so pkg-config will find the library's includes etc
+-Copy the include headers
+-Copy the compiled binary .so
+
+1. In this tutorials folder you'll find a file called libpd.pc
+That needs to go to /usr/lib/pkgconfig/
+$ cp libpd.pc /usr/lib/pkgconfig
+
+2. The headers are in the "libpd_wrapper" folder in the libpd source.
+They need to be copied to /usr/local/include/
+$ cd /path/to/libpd/
+$ cp libpd_wrapper/* /usr/local/include/
+
+3. The binary file in the libpd source "libs" folder needs to move to
+somewhere where LD will find it:
+$ cp libs/libpd.so /usr/local/libs/
+
+# Note: I've linked from /usr/lib/libpd.so to /usr/local/lib/libpd.so so
+my linker can find the shared object...
+
+Now the compile command in main.cpp should work!! Good luck!
+
