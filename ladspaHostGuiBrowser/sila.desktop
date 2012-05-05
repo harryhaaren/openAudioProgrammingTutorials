@@ -1,0 +1,10 @@
+
+[Desktop Entry]
+Name=sila
+GenericName=LADSPA_HOST
+Comment= LADSPA Host for a single plugin to jack
+Exec=sila
+Icon=
+Categories=AudioVideo;X-Jack;
+Terminal=false
+Type=Application

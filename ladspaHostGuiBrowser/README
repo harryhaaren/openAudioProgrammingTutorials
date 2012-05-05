@@ -1,0 +1,20 @@
+      Sila
+
+Note that the "make" tool is used to build this program!
+Just type "make" in a terminal that's in the directory and it will build
+
+Thanks to Hermann from the Guitarix project for donating this code!
+http://sourceforge.net/projects/guitarix/files/web/sila-0.2.tar.bz2/download
+
+a simple LADSPA host witch load a single LADSPA plugin and create 
+a interface for it.
+plugin could specified by command-line (lib-name UniqueID) or selected 
+from a LADSPA browser, witch will inform you over the plug-in details.
+Additional plug-ins could selected from a menu (Mono , Stereo, Misc)
+
+Jack connections will be reused when you switch a plug-in.
+Available are play/pause/stop.
+
+sila is created for fast ladspa plug-in check/testing.
+
+sila use the gtkmm tool-kit.
