@@ -1,0 +1,8 @@
+    Looped Sample
+
+This tutorial will show you how to load a sample into memory, and then
+play it back trough a JACK port, continually looping. There's not really
+that much to it, just a bit of thinking of the order things happen, and
+arrays. If you've read the "Writing a sample" tutorial, you'll already
+be familiar with LibSndFile, the library we use to read / write samples,
+so there's nothing too hard to handle :) 

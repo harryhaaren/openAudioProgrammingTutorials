@@ -1,0 +1,17 @@
+    Ladspa Host
+
+For this tutorial we're going to have to use some slightly more advanced
+features of glibmm, loading a plugin file, and then retrieving the
+LADSPA details from it.
+
+Once we have instantiated the plugin (created one processing "unit")
+then we "connect" the ports of the plugin to the variables of the host,
+and finally we tell it to run for "nframes" amount of audio samples.
+
+So the structure is pretty logical:
+
+    Load .so plugin file from disk
+    Retrieve details of plugin from file handle
+    Instantiate plugin
+    connect ports
+    run the plugin

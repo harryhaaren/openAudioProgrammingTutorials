@@ -1,0 +1,10 @@
+    Writing Soundfile To Disk
+
+This short tutorial will show you how to write a buffer of audio that's
+in memory to disk. We use a library called Libsndfile for this purpose,
+its a great library to read and write a variety of soundfile formats.
+
+So if you haven't done so yet, you'll need to install libsndfile-dev or
+similar to allow you link your C++ program against that library. Note
+that we're going to use the C++ wrapper around the C library, and hence
+we're including <sndfile.hh>

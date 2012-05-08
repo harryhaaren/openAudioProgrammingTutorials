@@ -1,0 +1,10 @@
+    JackClient
+
+What we're going to do today is create a simple JACK client. Its going
+to create 2 ports, one input, and one output. Then it will copy the data
+from one port to the other.
+
+This is essentially a useless JACK client, but it provides a good
+overview of how JACK programming works, and this basic functionality
+is essential for any fancy programs: read Ardour, QTractor, QSynth,
+Yoshimi etc *all* have a JACK process callback just like this one!
