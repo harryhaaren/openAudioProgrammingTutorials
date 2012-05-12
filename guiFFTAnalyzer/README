@@ -1,0 +1,11 @@
+    Gui FFT Analyzer
+
+This tutorial will show you how to dump audio from the JACK thread to the
+GUI thread, then perform FFT analysis of it, and show it in a widget :)
+
+Steps:
+1. Get audio data: A JACK input will provide a stream of audio
+2. Move data to non-rt thread
+3. Analyse data, using KissFFT library
+4. Plot resulting data on a custom widget
+
