@@ -27,9 +27,6 @@ void GFreqView::draw(int nframes, float* data)
   
   for (int i = 0; i < nframes; i++)
   {
-    // copy the data from the ring buffer to the vector in the widget
-    sample.push_back( *data );
-    
     // always copy the audio data, we'll use only what we need later!
     fftData.push_back( *data ); // real     (even)
     fftData.push_back( 0 );     // complex  ( odd)
@@ -170,18 +167,25 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
       cr -> set_source_rgb (0.1,0.1,0.1);
       cr -> fill();
       
-      // perform the FFT now, in the draw part of the process
+      // perform the FFT after some checks, fftDataCounter = window size
       fftDataCounter = 512;
       
-      if ( fftData.size() < 1024 )
+      if ( fftData.size() < fftDataCounter * 2 )
       {
         std::cout << " fftData < 1024, returning!" << endl;
         return true;
       }
       
+      std::vector<float> plotData;
+      
+      for ( int i = 0; i < fftDataCounter * 2; i++)
+      {
+        plotData.push_back( fftData.at(i) );
+      }
+      
       std::cout << "Performing FFT routine NOW, fftDataCounter = " << fftDataCounter << flush;
       // now perform the FFT, and the output will be written to fftData
-      performFFT( &fftData[0], fftDataCounter, 1 );
+      performFFT( &plotData[0], fftDataCounter, 1 );
       std::cout << "  FFT finished!" << endl;
       
       
@@ -192,21 +196,28 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
       
       for ( int i = 0; i < fftDataCounter; i += 2) // += 2 for Real & Complex numbers stored in one array
       {
-        float real = sqrt ( fftData[i] * fftData[i] );
-        float complex = fftData[i+1] * fftData[i+1];
+        float real = sqrt ( plotData[i] * plotData[i] );
+        float complex = plotData[i+1] * plotData[i+1];
         
         if ( real + complex > max )
         {
           max = real + complex;
-          bin = i / 2; // again, real & complex in one array, so divide it!
+          bin = i; // again, real & complex in one array, so divide it!
         }
       }
       
-      cout << "Max amp from draw = " << max << "  in bin number " << bin << endl;
+      cout << "Max amp from draw = " << max << "  in bin number " << bin << " so freq = " << bin * 43 << endl;
       
       
+      fftData.clear();
+      fftDataCounter = 0;
       
       
+      // draw line on widget to show current bin tracking
+      cr->move_to( 0, ySize * (512.f / bin)  ); // top
+      cr->line_to( xSize, ySize * (512.f / bin)  ); // bottom
+      cr -> set_source_rgb (0.0,1.0,1.0);
+      cr->stroke();
       
       
       
