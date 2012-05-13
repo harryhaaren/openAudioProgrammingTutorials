@@ -1,21 +1,34 @@
 
 
-#ifndef GWAVEVIEW
-#define GWAVEVIEW
+#ifndef GFREQVIEW
+#define GFREQVIEW
 
 #include <vector>
 #include <gtkmm.h>
 
-class GWaveView : public Gtk::DrawingArea
+#include <math.h>
+
+// include the files for the frequency analysis
+#include "kiss_fft.h"
+#include "kiss_fftr.h"
+
+class GFreqView : public Gtk::DrawingArea
 {
   public:
-    GWaveView();
+    GFreqView();
     
     void draw(int nframes, float*);
 
   protected:
     int width;
     int height;
+    
+    // frequency analysis
+    kiss_fftr_cfg fft;
+    
+    kiss_fft_cpx* cpx_buf;
+    
+    kiss_fft_cpx out_cpx[size];
     
     // keep a *copy* of the data in a "deque"
     std::deque<float> sample;
@@ -24,5 +37,5 @@ class GWaveView : public Gtk::DrawingArea
     bool on_expose_event(GdkEventExpose* event);
 };
 
-#endif // GWAVEVIEW
+#endif // GFREQVIEW
 

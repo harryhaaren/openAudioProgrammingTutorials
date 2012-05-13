@@ -1,8 +1,8 @@
 
 
-#include "waveview.hpp"
+#include "freqview.hpp"
 
-GWaveView::GWaveView()
+GFreqView::GFreqView()
 {
   // Gives "Exposure" events to the widget, we need the for when we want
   // to redraw the widget!
@@ -10,10 +10,14 @@ GWaveView::GWaveView()
   
   // set default widget size
   set_size_request( 400, 100 );
+  
+  dataSize = 128;
+  
+  fft =  kiss_fftr_alloc( dataSize * 2, 0, 0, 0 );
 }
 
 
-void GWaveView::draw(int nframes, float* data)
+void GFreqView::draw(int nframes, float* data)
 {
   for (int i = 0; i < nframes; i++)
   {
@@ -22,8 +26,30 @@ void GWaveView::draw(int nframes, float* data)
   }
   
   // limit the size of the sample being shown
-  if ( sample.size() > 40000 )
-      sample.erase (sample.begin(),sample.begin() + ( sample.size() - 40000) );
+  while( sample.size() > 256 )
+    sample.erase (sample.begin(),sample.begin() + 1);
+  
+  // do the frequency analysis
+  cpx_buf = copycpx(array,size);
+  
+  cpx_buf = (kiss_fft_cpx*) KISS_FFT_MALLOC ( sizeof(kiss_fft_cpx) * dataSize);
+  
+  // create scalar data holder
+  kiss_fft_scalar zero;
+  
+  // initialize it to all zero's
+  memset( &zero, 0, sizeof(zero) );
+  
+  for(i=0; i<nframe ; i++)
+  {
+    mat2[i].r = mat[i];
+    mat2[i].i = zero;
+  }
+  
+  // data transformation done!
+  
+  
+  
   
   // force our program to redraw the entire widget.
   Glib::RefPtr<Gdk::Window> win = get_window();
@@ -34,7 +60,7 @@ void GWaveView::draw(int nframes, float* data)
   }
 }
 
-bool GWaveView::on_expose_event(GdkEventExpose* event)
+bool GFreqView::on_expose_event(GdkEventExpose* event)
 {
     // This is where we draw on the window
     Glib::RefPtr<Gdk::Window> window = get_window();

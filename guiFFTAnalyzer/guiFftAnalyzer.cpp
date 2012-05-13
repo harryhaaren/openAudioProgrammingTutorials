@@ -1,6 +1,6 @@
 
 // Contact: Harry van Haaren <harryhaaren@gmail.com>
-// Compile: g++ waveview.cpp guiFftAnalyzer.cpp `pkg-config --cflags --libs gtkmm-2.4 jack`
+// Compile: g++ kiss_fft.c kiss_fftr.c freqview.cpp waveview.cpp guiFftAnalyzer.cpp `pkg-config --cflags --libs gtkmm-2.4 jack`
 
 #include <iostream>
 
@@ -10,7 +10,7 @@
 // include the ringbuffer that JACK has
 #include <jack/ringbuffer.h>
 
-// include our custom widget to display the audio data
+// include our custom widget to display the audio data in the time domain
 #include "waveview.hpp"
 
 jack_port_t* inputPort = 0;
