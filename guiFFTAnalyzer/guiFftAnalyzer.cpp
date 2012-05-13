@@ -13,6 +13,9 @@
 // include our custom widget to display the audio data in the time domain
 #include "waveview.hpp"
 
+// include our custom widget to display the audio data in the frequency domain
+#include "freqview.hpp"
+
 jack_port_t* inputPort = 0;
 
 // a global pointer to a ring buffer, to move the audio data between the threads
@@ -40,10 +43,8 @@ int process(jack_nframes_t nframes, void* )
 }
 
 // the GUI timeout signal will trigger this to happen every X milliseconds
-bool redrawGui(GWaveView* waveview)
+bool redrawGui(GFreqView* freqview) // GWaveView* waveview, 
 {
-  std::cout << "Redrawing GUI now" << std::endl;
-  
   // get read space
   int availableRead = jack_ringbuffer_read_space(ringbuffer);
   
@@ -59,9 +60,16 @@ bool redrawGui(GWaveView* waveview)
     int result = jack_ringbuffer_read( ringbuffer, (char*) &startOfData[0], availableRead );
     
     // tell the waveview to draw the new data
-    waveview->draw( availableRead / sizeof(float), &startOfData[0] );
+    //waveview->draw( availableRead / sizeof(float), &startOfData[0] );
+    
+    std::cout << "Redrawing GUI now" << std::endl;
+    
+    // tell the frequency graph to redraw the data
+    freqview->draw( availableRead / sizeof(float), &startOfData[0] );
+    
   }
   
+  return true;
 }
 
 int main(int argc, char** argv)
@@ -73,14 +81,17 @@ int main(int argc, char** argv)
   
   Gtk::Window window;
   
-  // create custom widget instance
+  // create custom widget instances
   GWaveView waveview;
-  window.add( waveview );
+  GFreqView freqview;
+  
+  
+  window.add( freqview );
   window.show_all();
   window.set_title("FFT Analyzer");
   
   // set a timer to call the GUI draw() function every X milliseconds
-  Glib::signal_timeout().connect( sigc::bind(sigc::ptr_fun(&redrawGui), &waveview) , 25);
+  Glib::signal_timeout().connect( sigc::bind(sigc::ptr_fun(&redrawGui), &freqview) , 100);
   
   
   // setup JACK stuff

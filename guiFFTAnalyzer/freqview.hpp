@@ -3,14 +3,12 @@
 #ifndef GFREQVIEW
 #define GFREQVIEW
 
+#include <iostream>
+
 #include <vector>
 #include <gtkmm.h>
 
 #include <math.h>
-
-// include the files for the frequency analysis
-#include "kiss_fft.h"
-#include "kiss_fftr.h"
 
 class GFreqView : public Gtk::DrawingArea
 {
@@ -23,15 +21,15 @@ class GFreqView : public Gtk::DrawingArea
     int width;
     int height;
     
-    // frequency analysis
-    kiss_fftr_cfg fft;
-    
-    kiss_fft_cpx* cpx_buf;
-    
-    kiss_fft_cpx out_cpx[size];
+    int  fftDataCounter;
     
     // keep a *copy* of the data in a "deque"
     std::deque<float> sample;
+    
+    std::deque<float> fftData;
+    
+    // this is our own implementation of the FFT transform
+    void performFFT(float data[], unsigned long number_of_complex_samples, int isign);
     
     // this is the GTK "draw" function, it's where we'll draw lines onto the widget
     bool on_expose_event(GdkEventExpose* event);

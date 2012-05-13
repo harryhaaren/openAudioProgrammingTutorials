@@ -2,6 +2,11 @@
 
 #include "freqview.hpp"
 
+using namespace std;
+
+#define SWAP(a,b)tempr=(a);(a)=(b);(b)=tempr;
+//tempr is a variable from our FFT function
+
 GFreqView::GFreqView()
 {
   // Gives "Exposure" events to the widget, we need the for when we want
@@ -9,48 +14,30 @@ GFreqView::GFreqView()
   add_events(Gdk::EXPOSURE_MASK);
   
   // set default widget size
-  set_size_request( 400, 100 );
+  set_size_request( 100, 500 );
   
-  dataSize = 128;
-  
-  fft =  kiss_fftr_alloc( dataSize * 2, 0, 0, 0 );
+  fftDataCounter = 0;
+  fftData.clear();
 }
 
 
 void GFreqView::draw(int nframes, float* data)
 {
+  cout << "GFreqView::draw() now!" << flush;
+  
   for (int i = 0; i < nframes; i++)
   {
     // copy the data from the ring buffer to the vector in the widget
-    sample.push_back( *data++ );
+    sample.push_back( *data );
+    
+    // always copy the audio data, we'll use only what we need later!
+    fftData.push_back( *data ); // real     (even)
+    fftData.push_back( 0 );     // complex  ( odd)
+    fftDataCounter++;
+    
+    data++; // move to next sample in input buffer
   }
-  
-  // limit the size of the sample being shown
-  while( sample.size() > 256 )
-    sample.erase (sample.begin(),sample.begin() + 1);
-  
-  // do the frequency analysis
-  cpx_buf = copycpx(array,size);
-  
-  cpx_buf = (kiss_fft_cpx*) KISS_FFT_MALLOC ( sizeof(kiss_fft_cpx) * dataSize);
-  
-  // create scalar data holder
-  kiss_fft_scalar zero;
-  
-  // initialize it to all zero's
-  memset( &zero, 0, sizeof(zero) );
-  
-  for(i=0; i<nframe ; i++)
-  {
-    mat2[i].r = mat[i];
-    mat2[i].i = zero;
-  }
-  
-  // data transformation done!
-  
-  
-  
-  
+
   // force our program to redraw the entire widget.
   Glib::RefPtr<Gdk::Window> win = get_window();
   if (win)
@@ -58,10 +45,94 @@ void GFreqView::draw(int nframes, float* data)
     Gdk::Rectangle r(0, 0, get_allocation().get_width(),get_allocation().get_height());
     win->invalidate_rect(r, false);
   }
+  
+  return;
+}
+
+
+// FFT algorithm & tutorial taken from here:
+// http://www.codeproject.com/Articles/9388/How-to-implement-the-FFT-algorithm
+void GFreqView::performFFT(float data[], unsigned long number_of_complex_samples, int isign)
+{
+    //variables for trigonometric recurrences
+    unsigned long n,mmax,m,j,istep,i;
+    double wtemp,wr,wpr,wpi,wi,theta,tempr,tempi;
+    
+    double pi = 3.1415;
+    
+    
+    //      Bit Reversal
+    //the complex array is real+complex so the array 
+    //as a size n = 2* number of complex samples
+    // real part is the data[index] and the complex part is the data[index+1]
+    n=number_of_complex_samples * 2;
+    
+    //binary inversion (note that 
+    //the indexes start from 1 witch means that the
+    //real part of the complex is on the odd-indexes
+    //and the complex part is on the even-indexes
+    j=1;
+    for (i=1;i<n;i+=2) { 
+        if (j > i) {
+            
+            //swap the real part
+            //SWAP(data[j],data[i]); 
+            float tmp = data[j];
+            data[j] = data[i];
+            data[i] = tmp;
+            
+            
+            //swap the complex part
+            //SWAP(data[j+1],data[i+1]);
+            tmp = data[j+1];
+            data[j+1] = data[i+1];
+            data[i+1] = tmp;
+        }
+        m=n/2;
+        while (m >= 2 && j > m) {
+            j -= m;
+            m = m/2;
+        }
+        j += m;
+    }
+    
+    //  End Bit Reversal
+    
+    //Danielson-Lanzcos FFT routine 
+    mmax=2;
+    //external loop
+    while (n > mmax)
+    {
+        istep = mmax<<  1;
+        theta=sin(2*pi/mmax);
+        wtemp=sin(0.5*theta);
+        wpr = -2.0*wtemp*wtemp;
+        wpi=sin(theta);
+        wr=1.0;
+        wi=0.0;
+        //internal loops
+        for (m=1;m<mmax;m+=2) {
+            for (i= m;i<=n;i+=istep) {
+                j=i+mmax;
+                tempr=wr*data[j-1]-wi*data[j];
+                tempi=wr*data[j]+wi*data[j-1];
+                data[j-1]=data[i-1]-tempr;
+                data[j]=data[i]-tempi;
+                data[i-1] += tempr;
+                data[i] += tempi;
+            }
+            wr=(wtemp=wr)*wpr-wi*wpi+wr;
+            wi=wi*wpr+wtemp*wpi+wi;
+        }
+        mmax=istep;
+    }
+    
 }
 
 bool GFreqView::on_expose_event(GdkEventExpose* event)
 {
+  
+  cout << "FreqView::onExposeEvent() " << endl;
     // This is where we draw on the window
     Glib::RefPtr<Gdk::Window> window = get_window();
     
@@ -98,6 +169,46 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
       // Draw outline shape
       cr -> set_source_rgb (0.1,0.1,0.1);
       cr -> fill();
+      
+      // perform the FFT now, in the draw part of the process
+      fftDataCounter = 512;
+      
+      if ( fftData.size() < 1024 )
+      {
+        std::cout << " fftData < 1024, returning!" << endl;
+        return true;
+      }
+      
+      std::cout << "Performing FFT routine NOW, fftDataCounter = " << fftDataCounter << flush;
+      // now perform the FFT, and the output will be written to fftData
+      performFFT( &fftData[0], fftDataCounter, 1 );
+      std::cout << "  FFT finished!" << endl;
+      
+      
+      // interpret FFT data, get peaks from complex numbers
+      // complex amplitude = square root of the square of the real plus the square of the complex.
+      float max = 0.f;
+      int bin = -1;
+      
+      for ( int i = 0; i < fftDataCounter; i += 2) // += 2 for Real & Complex numbers stored in one array
+      {
+        float real = sqrt ( fftData[i] * fftData[i] );
+        float complex = fftData[i+1] * fftData[i+1];
+        
+        if ( real + complex > max )
+        {
+          max = real + complex;
+          bin = i / 2; // again, real & complex in one array, so divide it!
+        }
+      }
+      
+      cout << "Max amp from draw = " << max << "  in bin number " << bin << endl;
+      
+      
+      
+      
+      
+      
       
       
       // don't draw every sample
