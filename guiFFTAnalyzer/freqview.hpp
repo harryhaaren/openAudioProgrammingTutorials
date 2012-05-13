@@ -9,6 +9,7 @@
 #include <gtkmm.h>
 
 #include <math.h>
+#include <sstream>
 
 class GFreqView : public Gtk::DrawingArea
 {

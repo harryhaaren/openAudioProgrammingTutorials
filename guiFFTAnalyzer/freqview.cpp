@@ -168,11 +168,11 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
       cr -> fill();
       
       // perform the FFT after some checks, fftDataCounter = window size
-      fftDataCounter = 512;
+      fftDataCounter = 4096;
       
       if ( fftData.size() < fftDataCounter * 2 )
       {
-        std::cout << " fftData < 1024, returning!" << endl;
+        std::cout << " fftData < " << fftDataCounter * 2 << ", returning!" << endl;
         return true;
       }
       
@@ -183,7 +183,7 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
         plotData.push_back( fftData.at(i) );
       }
       
-      std::cout << "Performing FFT routine NOW, fftDataCounter = " << fftDataCounter << flush;
+      std::cout << "Performing FFT routine NOW, points = " << fftDataCounter << flush;
       // now perform the FFT, and the output will be written to fftData
       performFFT( &plotData[0], fftDataCounter, 1 );
       std::cout << "  FFT finished!" << endl;
@@ -192,73 +192,55 @@ bool GFreqView::on_expose_event(GdkEventExpose* event)
       // interpret FFT data, get peaks from complex numbers
       // complex amplitude = square root of the square of the real plus the square of the complex.
       float max = 0.f;
-      int bin = -1;
+      int maxBin = -1;
+      float maxPower = 0.f;
+      
+      float freq = 0.f;
+      float binSize = 44100 / fftDataCounter;
       
       for ( int i = 0; i < fftDataCounter; i += 2) // += 2 for Real & Complex numbers stored in one array
       {
-        float real = sqrt ( plotData[i] * plotData[i] );
+        float real = plotData[i] * plotData[i];
         float complex = plotData[i+1] * plotData[i+1];
         
-        if ( real + complex > max )
+        float power = sqrt(real + complex) / 2;
+        
+        if ( power > max )
         {
-          max = real + complex;
-          bin = i; // again, real & complex in one array, so divide it!
+          max = power;
+          maxBin = i / 2;
+          maxPower = power;
         }
+        int bin = i / 2;
+        
+        
+        
+        //cout << "power = " << power << " Bin = " << bin << " Freq = " << freq << endl;
+        
+        
+        if ( bin != 0 )
+        {
+          // draw line on widget to show current bin tracking
+          cr->move_to( 0, ySize / bin  ); // top
+          cr->line_to( xSize, ySize / bin  ); // bottom
+          cr -> set_source_rgb (0.0,1.0 * max,1.0 * max);
+          cr->stroke();
+        }
+        
       }
       
-      cout << "Max amp from draw = " << max << "  in bin number " << bin << " so freq = " << bin * 43 << endl;
+      std::stringstream s;
+      s << "Freq = ";
+      s << maxBin * binSize;
+      s << "  Power";
+      s << maxPower;
+      cr->move_to( x + 10, y + 200 );
+      cr->show_text( s.str() );
       
-      
+      // clear the data, wait for new before redraw
       fftData.clear();
       fftDataCounter = 0;
       
-      
-      // draw line on widget to show current bin tracking
-      cr->move_to( 0, ySize * (512.f / bin)  ); // top
-      cr->line_to( xSize, ySize * (512.f / bin)  ); // bottom
-      cr -> set_source_rgb (0.0,1.0,1.0);
-      cr->stroke();
-      
-      
-      
-      
-      // don't draw every sample
-      int sampleCountForDrawing = -1;
-      
-      float currentTop = 0.f;
-      float previousTop = 0.f;
-      float currentSample = 0.f;
-      
-      // loop for drawing each Point on the widget.
-      for (long index=0; index <(long)sample.size(); index++ )
-      {
-        // get the current sample
-        float currentSample = sample.at(index);
-        
-        if ( currentSample > 0 && currentTop < currentSample )
-        {
-          currentTop = currentSample;
-        }
-        sampleCountForDrawing--;
-        
-        if ( sampleCountForDrawing < 0 )
-        {
-          float drawSample = currentTop;
-          
-          int xCoord = x + ( xSize * ( float(index) / sample.size() ) );
-          
-          cr->move_to( xCoord, y + (ySize/2) - (previousTop * ySize )  ); // top
-          cr->line_to( xCoord, y + (ySize/2) + (drawSample  * ySize )  ); // bottom
-          
-          sampleCountForDrawing = 15;
-          previousTop = drawSample;
-          currentTop = 0;
-        }
-        
-      }
-      
-      cr -> set_source_rgb (1.0,1.0,1.0);
-      cr->stroke();
     }
   return true;
 } // on_expose_event()
