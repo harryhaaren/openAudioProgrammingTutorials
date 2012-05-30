@@ -1,8 +1,8 @@
-
 // Contact: Harry van Haaren <harryhaaren@gmail.com>
 // Compile: g++ jackClient.cpp `pkg-config --cflags --libs jack`
 
 #include <iostream>
+#include <unistd.h>
 #include <jack/jack.h>
 
 // declare two "jack_port_t" pointers, which will each represent a port
