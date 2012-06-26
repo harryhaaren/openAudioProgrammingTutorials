@@ -17,7 +17,7 @@ jack_port_t* outputPort = 0;
 // so that you can work with any amount of frames per process() call!
 int process(jack_nframes_t nframes, void* )
 {
-  // here's a touch tricky, port_get_buffer() will return a pointer to
+  // this is a little tricky, port_get_buffer() will return a pointer to
   // the data that we will use, so cast it to (float*), so that we
   // can use the data as floating point numbers. JACK will always pass
   // floating point samples around, the reason that we have to cast it
@@ -68,7 +68,7 @@ int main()
   // activate the client, ie: enable it for processing
   jack_activate(client);
   
-  // pause a while, letting JACK copy the data across
+  // pause for 30 seconds, letting process() do it's thing
   sleep(30);
   
   // tell JACK to stop processing the client
