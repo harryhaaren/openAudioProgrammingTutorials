@@ -49,7 +49,8 @@ int main()
                                             0,
                                             0 );
   
-  // register the process callback
+  // register the process callback : JACK "calls us back" when there is
+  // work to be done, and the "process" function does that work.
   jack_set_process_callback  (client, process , 0);
   
   // register two ports, one input one output, both of AUDIO type
